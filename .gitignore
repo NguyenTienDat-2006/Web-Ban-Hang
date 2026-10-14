@@ -1,0 +1,9 @@
+node_modules/
+.runtime/
+storage/
+.env
+node-*.zip
+node-shasums.txt
+
+*.sqlite-wal
+*.sqlite-shm

@@ -1,0 +1,13 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY, category_id INTEGER NOT NULL REFERENCES categories(id), name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', price INTEGER NOT NULL CHECK(price>=0), image_url TEXT NOT NULL DEFAULT '', is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)));
+CREATE TABLE IF NOT EXISTS product_variants (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL REFERENCES products(id), sku TEXT NOT NULL UNIQUE, size TEXT NOT NULL, color TEXT NOT NULL, stock INTEGER NOT NULL CHECK(stock>=0), UNIQUE(product_id,size,color));
+CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY, order_code TEXT NOT NULL UNIQUE, customer_name TEXT NOT NULL, customer_phone TEXT NOT NULL, customer_email TEXT NOT NULL DEFAULT '', shipping_address TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', subtotal INTEGER NOT NULL, shipping_fee INTEGER NOT NULL, total INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','confirmed','shipping','completed','cancelled')), payment_method TEXT NOT NULL DEFAULT 'cod', payment_status TEXT NOT NULL DEFAULT 'unpaid', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL, product_name TEXT NOT NULL, sku TEXT NOT NULL, size TEXT NOT NULL, color TEXT NOT NULL, unit_price INTEGER NOT NULL, quantity INTEGER NOT NULL CHECK(quantity>0));
+CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, admin_id INTEGER NOT NULL REFERENCES admin_users(id), expires_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS products_category ON products(category_id,is_active);
+CREATE INDEX IF NOT EXISTS variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS items_order ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS orders_status ON orders(status,created_at);
+CREATE TABLE IF NOT EXISTS order_payments (order_id INTEGER PRIMARY KEY REFERENCES orders(id), token_hash TEXT NOT NULL UNIQUE, expires_at INTEGER NOT NULL, reported_at INTEGER);
